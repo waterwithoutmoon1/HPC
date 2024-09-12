@@ -346,7 +346,7 @@ void Domain::update_ghosts(Atoms &atoms, double border_width) {
                 MPI::allreduce(nb_recv_left + nb_recv_right, MPI_SUM, comm_);
 
             // Mark the newly added atoms as ghost atoms
-            // atoms.is_ghost.tail(nb_recv_left + nb_recv_right).setConstant(true);
+            atoms.is_ghost.tail(nb_recv_left + nb_recv_right).setConstant(true);
         }
     }
 }

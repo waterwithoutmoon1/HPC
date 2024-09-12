@@ -7,8 +7,6 @@ executable(
 
 )
 
-#fs = import('fs')
-#fs.copyfile('lj54.xyz')
 
 # Define the source and destination paths
 source_file = 'lj54.xyz'

@@ -20,12 +20,14 @@ public:
     Forces_t forces;
     Masses_t masses;
     Names_t names;
+    Eigen::ArrayXd per_atom_potential_energy;
 
     Atoms(const Positions_t &p) :
             positions{p}, velocities{3, p.cols()}, forces{3, p.cols()}, masses{p.cols()} {
         velocities.setZero();
         forces.setZero();
         masses.setOnes();
+        per_atom_potential_energy.setZero();
         initialize_ghost_flags();
     }
 
@@ -34,6 +36,7 @@ public:
         assert(p.cols() == v.cols());
         forces.setZero();
         masses.setOnes();
+        per_atom_potential_energy.setZero();
         initialize_ghost_flags();
     }
 
@@ -42,6 +45,7 @@ public:
         velocities.setZero();
         forces.setZero();
         masses.setOnes();
+        per_atom_potential_energy.setZero();
         initialize_ghost_flags();
     }
 
@@ -57,6 +61,7 @@ public:
         masses.conservativeResize(new_size);
         // Initialize newly added atoms as non-ghosts
         is_ghost.conservativeResize(new_size);
+        per_atom_potential_energy.conservativeResize(new_size);
         if (new_size > old_size) {
             is_ghost.segment(old_size, new_size - old_size).setConstant(false);
         }

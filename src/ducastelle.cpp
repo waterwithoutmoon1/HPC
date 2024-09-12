@@ -48,8 +48,7 @@ double ducastelle(Atoms &atoms, const NeighborList &neighbor_list,
     atoms.forces.setZero();
 
     // compute embedding energies
-    Eigen::ArrayXd embedding(
-        atoms.nb_atoms()); // contains first density, later energy
+    Eigen::ArrayXd embedding(atoms.nb_atoms()); // contains first density, later energy
     embedding.setZero();
 
     // std::cout << "Number of particles: " << atoms.positions.cols() << std::endl;
@@ -133,14 +132,18 @@ double ducastelle(Atoms &atoms, const NeighborList &neighbor_list,
     }
 
     // Sum the potential energy only for non-ghost atoms
-    double local_potential_energy = 0.0;
-    assert(energies.size() == atoms.nb_atoms());
-    for (int i = 0; i < atoms.nb_atoms(); ++i) {
-        if (!atoms.is_ghost_atom(i)) {
-            local_potential_energy += energies(i);
-        }
-    }
+    // double local_potential_energy = 0.0;
+    // assert(energies.size() == atoms.nb_atoms());
+    // for (int i = 0; i < atoms.nb_atoms(); ++i) {
+    //     if (!atoms.is_ghost_atom(i)) {
+    //         local_potential_energy += energies(i);
+    //     }
+    // }
     // // Return total potential energy
-    return local_potential_energy;
-    // return energies.sum();
+    // return local_potential_energy;
+
+    //Get potential energy for every atoms
+    atoms.per_atom_potential_energy = energies;
+
+    return energies.sum();
 }

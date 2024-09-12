@@ -8,40 +8,27 @@
 #include <string>
 #include <xyz.h>
 #include <chrono>
+#include <verlet_2.h>
+#include <berendsen_thermostat.h>
 
-double compute_kinetic_energy(const Eigen::Array3Xd &velocities, double mass) {
-    double kinetic_energy = 0.0;
-    size_t num_atoms = velocities.cols();
-    for (int i = 0; i < num_atoms; ++i) {
-        kinetic_energy += 0.5 * mass * velocities.col(i).matrix().squaredNorm();
-    }
-    return kinetic_energy;
-}
 
 void velocity_verlet(Atoms &atoms, NeighborList &neighbor_list, double timestep, double epsilon, double sigma, double mass, double cutoff) {
     size_t num_atoms = atoms.nb_atoms();
     double potential_energy = lj_neighborlist(atoms, neighbor_list, epsilon, sigma, cutoff);
 
     // Update positions
-    atoms.velocities += 0.5 * timestep * atoms.forces / mass; // Assuming mass = 1.0
-    atoms.positions += timestep * atoms.velocities;
+    verlet2_step1(atoms.positions, atoms.velocities, atoms.forces, timestep, mass);
 
     // Update neighbor list and forces
     neighbor_list.update(atoms, cutoff);
     potential_energy = lj_neighborlist(atoms, neighbor_list, epsilon, sigma, cutoff);
 
     // Update velocities
-    atoms.velocities += 0.5 * timestep * atoms.forces / mass;
-}
-
-void apply_berendsen_thermostat(Atoms &atoms, double target_temp, double tau_T, double timestep) {
-    double current_temp = (atoms.velocities.square().sum()) / (3.0 * atoms.nb_atoms());
-    double lambda = sqrt(1.0 + (timestep / tau_T) * (target_temp / current_temp - 1.0));
-    atoms.velocities *= lambda;
+    verlet2_step2(atoms.velocities, atoms.forces, timestep, mass);
 }
 
 // Function to run the simulation
-double run_simulation(Atoms &atoms, double epsilon, double sigma, double mass, NeighborList &neighbor_list,
+double run_simulation(Atoms &atoms, double kB, double epsilon, double sigma, double mass, NeighborList &neighbor_list,
                     double cutoff, double target_temp, double tau_T, double timestep, double total_time,
                     const std::string &output_file) {
     int steps = static_cast<int>(total_time / timestep);
@@ -60,7 +47,7 @@ double run_simulation(Atoms &atoms, double epsilon, double sigma, double mass, N
         // Compute kinetic energy and temperature
         double kinetic_energy = compute_kinetic_energy(atoms.velocities,mass);
         double total_energy = potential_energy + kinetic_energy;
-        double temperature = (2.0 / 3.0) * (kinetic_energy / atoms.nb_atoms());
+        double temperature = (2.0 / 3.0) * (kinetic_energy / (atoms.nb_atoms()*kB));
 
         // Record data
         data << step << "," << total_energy << "," << kinetic_energy << ","
@@ -70,7 +57,7 @@ double run_simulation(Atoms &atoms, double epsilon, double sigma, double mass, N
         velocity_verlet(atoms, neighbor_list, timestep,epsilon, sigma, mass, cutoff);
 
         // Apply Berendsen thermostat
-        apply_berendsen_thermostat(atoms, target_temp, tau_T, timestep);
+        apply_berendsen_thermostat(atoms, kB, mass, target_temp, tau_T, timestep);
 
     }
 
@@ -86,6 +73,7 @@ double run_simulation(Atoms &atoms, double epsilon, double sigma, double mass, N
     return elapsed_time;
 }
 
+//Create cubic lattice
 void create_cubic_lattice(Atoms &atoms, int num_atoms_per_side, double lattice_constant) {
     int num_atoms = num_atoms_per_side * num_atoms_per_side * num_atoms_per_side;
     Positions_t positions(3, num_atoms);
@@ -120,6 +108,7 @@ try{
     double epsilon = 1.0;
     double sigma = 1.0;
     double mass = 1.0;
+    double kB = 1.0;
 
     //Parameters of time
     double timestep = 0.001;
@@ -133,7 +122,7 @@ try{
     std::vector<int> atom_counts = {8, 27, 64, 125, 216, 343, 512, 729, 1000};
     std::vector<double> times;
 
-    //with different numbers of atoms
+    //Simulation with different numbers of atoms
     for (int num_atoms_per_side = 2; num_atoms_per_side <= 10; ++num_atoms_per_side) {
         double lattice_constant = 1.0;
         create_cubic_lattice(atoms, num_atoms_per_side, lattice_constant);
@@ -144,7 +133,7 @@ try{
 
         std::string output_file = "simulation_data_" + std::to_string(atoms.nb_atoms()) + ".csv";
 
-        double elapsed_time = run_simulation(atoms, epsilon, sigma, mass, neighbor_list,
+        double elapsed_time = run_simulation(atoms, kB, epsilon, sigma, mass, neighbor_list,
                     cutoff, target_temp, tau_T, timestep, total_time,
                     output_file);
 

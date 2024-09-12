@@ -39,8 +39,7 @@ class NeighborList {
      * Update neighbor list from the particle positons stores in the `atoms`
      * argument
      */
-    const std::tuple<const Eigen::ArrayXi &, const Eigen::ArrayXi &>
-    update(const Atoms &atoms, double cutoff);
+    const std::tuple<const Eigen::ArrayXi &, const Eigen::ArrayXi &> update(const Atoms &atoms, double cutoff);
 
     /*
      * Return internal seed and neighbor arrays

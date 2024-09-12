@@ -3,12 +3,12 @@ lib_sources = [  # All source files (excluding headers)
     'verlet.cpp',
     'verlet_2.cpp',
     'lj_direction_summation.cpp',
+    'berendsen_thermostat.cpp',
     'xyz.cpp',
     'neighbors.cpp',
     'lj_neighborlist.cpp',
     'ducastelle.cpp',
     'domain.cpp',
-    'ih.cpp'
 ]
 
 lib = static_library(

@@ -16,3 +16,14 @@ configure_file(
 	output : destination_file,
 	copy: true
 )
+
+# Define the source and destination paths
+source_file_1 = 'whisker_large.xyz'
+destination_file_1 = 'whisker_large.xyz'  # This is the name it will have in the build directory
+
+# Use configure_file to copy the file
+configure_file(
+	input : source_file_1,
+	output : destination_file_1,
+	copy: true
+)
